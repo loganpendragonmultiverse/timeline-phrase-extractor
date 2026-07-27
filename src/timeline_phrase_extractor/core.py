@@ -21,7 +21,7 @@ def _timeline(data: dict[str, Any]) -> dict[str, Any]:
         "relative": "\\b(?:the\\s+)?(?:next|previous|following|prior)\\s+(?:morning|evening|night|day|week|month|year)\\b",
         "date": "\\b(?:in\\s+)?(?:1[5-9]\\d{2}|20\\d{2})\\b",
     }
-    phrases = []
+    phrases: list[dict[str, int | str]] = []
     for kind, pattern in patterns.items():
         for match in re.finditer(pattern, text, re.IGNORECASE):
             phrases.append(
@@ -32,7 +32,7 @@ def _timeline(data: dict[str, Any]) -> dict[str, Any]:
                     "line": text.count("\n", 0, match.start()) + 1,
                 }
             )
-    phrases.sort(key=lambda item: item["offset"])
+    phrases.sort(key=lambda item: int(item["offset"]))
     return {"count": len(phrases), "phrases": phrases}
 
 
