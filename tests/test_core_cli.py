@@ -15,6 +15,8 @@ def test_representative_sample_has_expected_result():
     assert report["version"] == 1
     assert report["project"] == PROJECT
     assert [item["kind"] for item in report["phrases"]] == ["duration", "date", "relative"]
+    assert report["by_kind"] == {"duration": 1, "date": 1, "relative": 1}
+    assert report["phrases"][0]["section"] == "(document)"
     assert f'"project": "{PROJECT}"' in render_json(report)
     assert PROJECT.replace("-", " ").title() in render_markdown(report)
 
@@ -22,6 +24,16 @@ def test_representative_sample_has_expected_result():
 def test_missing_required_input_is_rejected():
     with pytest.raises(ValueError):
         analyze({})
+
+
+def test_calendar_dates_clock_times_sections_and_context():
+    report = analyze(
+        {"text": "# Departure\nMeet on March 4, 2027 at 08:30.\n## Return\nBack 2 days later."}
+    )
+    assert [item["kind"] for item in report["phrases"]] == ["date", "clock_time", "duration"]
+    assert report["phrases"][0]["section"] == "Departure"
+    assert report["phrases"][2]["section"] == "Return"
+    assert report["phrases"][0]["context"].startswith("Meet on")
 
 
 def test_cli_json_and_output_safety(tmp_path, capsys):
