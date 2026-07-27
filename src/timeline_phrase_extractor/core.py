@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections import Counter
 from typing import Any
 
 PROJECT = "timeline-phrase-extractor"
@@ -19,21 +20,36 @@ def _timeline(data: dict[str, Any]) -> dict[str, Any]:
     patterns = {
         "duration": "\\b(?:one|two|three|four|five|six|seven|eight|nine|ten|\\d+)\\s+(?:minutes?|hours?|days?|weeks?|months?|years?)\\s+(?:later|earlier|before|after)\\b",
         "relative": "\\b(?:the\\s+)?(?:next|previous|following|prior)\\s+(?:morning|evening|night|day|week|month|year)\\b",
-        "date": "\\b(?:in\\s+)?(?:1[5-9]\\d{2}|20\\d{2})\\b",
+        "date": r"\b(?:\d{4}-\d{2}-\d{2}|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:,\s*\d{4})?|(?:in\s+)?(?:1[5-9]\d{2}|20\d{2}))\b",
+        "clock_time": r"\b(?:[01]?\d|2[0-3]):[0-5]\d(?:\s*(?:a\.m\.|p\.m\.|am|pm))?\b",
     }
+    source_lines = text.splitlines()
+    headings: list[tuple[int, str]] = [(1, "(document)")]
+    for line_number, line_text in enumerate(source_lines, start=1):
+        heading = re.match(r"^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$", line_text)
+        if heading:
+            headings.append((line_number, heading.group(1)))
     phrases: list[dict[str, int | str]] = []
     for kind, pattern in patterns.items():
         for match in re.finditer(pattern, text, re.IGNORECASE):
+            line = text.count("\n", 0, match.start()) + 1
+            section = next(name for start, name in reversed(headings) if start <= line)
             phrases.append(
                 {
                     "kind": kind,
                     "phrase": match.group(0),
                     "offset": match.start(),
-                    "line": text.count("\n", 0, match.start()) + 1,
+                    "line": line,
+                    "section": section,
+                    "context": source_lines[line - 1].strip() if source_lines else "",
                 }
             )
     phrases.sort(key=lambda item: int(item["offset"]))
-    return {"count": len(phrases), "phrases": phrases}
+    return {
+        "count": len(phrases),
+        "by_kind": dict(Counter(str(item["kind"]) for item in phrases)),
+        "phrases": phrases,
+    }
 
 
 def analyze(data: dict[str, Any]) -> dict[str, Any]:
