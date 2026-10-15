@@ -23,6 +23,11 @@ def _timeline(data: dict[str, Any]) -> dict[str, Any]:
         "date": r"\b(?:\d{4}-\d{2}-\d{2}|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:,\s*\d{4})?|(?:in\s+)?(?:1[5-9]\d{2}|20\d{2}))\b",
         "clock_time": r"\b(?:[01]?\d|2[0-3]):[0-5]\d(?:\s*(?:a\.m\.|p\.m\.|am|pm))?\b",
     }
+    glossary = data.get("glossary", [])
+    if not isinstance(glossary, list) or any(
+        not isinstance(phrase, str) or not phrase.strip() for phrase in glossary
+    ):
+        raise ValueError("glossary must be an array of nonempty literal phrases")
     source_lines = text.splitlines()
     headings: list[tuple[int, str]] = [(1, "(document)")]
     for line_number, line_text in enumerate(source_lines, start=1):
@@ -42,6 +47,25 @@ def _timeline(data: dict[str, Any]) -> dict[str, Any]:
                     "line": line,
                     "section": section,
                     "context": source_lines[line - 1].strip() if source_lines else "",
+                }
+            )
+    # Lookahead retains overlapping literal occurrences. re.escape prevents regex syntax.
+    seen: set[tuple[int, int]] = set()
+    for phrase in glossary:
+        for match in re.finditer("(?=(" + re.escape(phrase) + "))", text, re.IGNORECASE):
+            span = (match.start(), match.start() + len(match.group(1)))
+            if span in seen:
+                continue
+            seen.add(span)
+            line = text.count("\n", 0, match.start()) + 1
+            phrases.append(
+                {
+                    "kind": "authored",
+                    "phrase": match.group(1),
+                    "offset": match.start(),
+                    "line": line,
+                    "section": next(name for start, name in reversed(headings) if start <= line),
+                    "context": source_lines[line - 1].strip(),
                 }
             )
     phrases.sort(key=lambda item: int(item["offset"]))
