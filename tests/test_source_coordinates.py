@@ -51,3 +51,18 @@ def test_cli_rejects_nonobject_and_preserves_existing_output(tmp_path, capsys):
     output.write_text("keep", encoding="utf-8")
     assert main([str(source), "--output", str(output)]) == 2
     assert output.read_text() == "keep"
+
+
+def test_cli_refuses_dangling_output_symlink(tmp_path, capsys):
+    source = tmp_path / "input.json"
+    source.write_text('{"text": "next day"}', encoding="utf-8")
+    missing = tmp_path / "missing-target"
+    output = tmp_path / "report.md"
+    try:
+        output.symlink_to(missing)
+    except OSError as exc:
+        pytest.skip(f"symlink creation unavailable: {exc}")
+    assert main([str(source), "--output", str(output)]) == 2
+    assert "symbolic link" in capsys.readouterr().err
+    assert output.is_symlink()
+    assert not missing.exists()

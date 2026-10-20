@@ -55,3 +55,6 @@ separators remain source characters. Slicing the original text at the offsets re
 the matched phrase. The input must be a JSON object with string `text`; an empty string
 produces an empty report. Reports use exclusive output creation and safely fenced Markdown.
 No date validation, chronology resolution or calendar arithmetic is inferred.
+
+Existing output paths and symbolic links are refused. Use a trusted local output directory;
+protection against hostile concurrent directory or symlink replacement is outside the scope.
