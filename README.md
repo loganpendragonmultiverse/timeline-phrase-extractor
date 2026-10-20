@@ -12,7 +12,7 @@ timeline-phrases examples/sample.json
 timeline-phrases examples/sample.json --format json --output report.json
 ```
 
-The example documents the complete input shape. Version 1.1 recognizes month-name and ISO dates plus 24-hour clock times, and adds source-line context, Markdown-section names, and per-kind totals. Markdown is intended for immediate review; JSON preserves structured evidence for scripts and later comparison. An existing output file is never overwritten.
+The source-tree example documents the complete input shape. Version 1.1 recognizes month-name and ISO dates plus 24-hour clock times, and adds source-line context, Markdown-section names, and per-kind totals. Markdown is intended for immediate review; JSON preserves structured evidence for scripts and later comparison. An existing output file is never overwritten.
 
 ## Privacy and platforms
 
@@ -58,3 +58,22 @@ No date validation, chronology resolution or calendar arithmetic is inferred.
 
 Existing output paths and symbolic links are refused. Use a trusted local output directory;
 protection against hostile concurrent directory or symlink replacement is outside the scope.
+
+## Installed examples and instructions (1.3.1)
+
+Both the wheel and source distribution ship README, development, testing and changelog
+instructions, the license, and the complete sample. In a virtual environment, wheel
+installation places them under `share/doc/timeline-phrase-extractor` beneath the environment.
+Locate the bundled sample with the same Python interpreter used for installation:
+
+```bash
+python -c "from pathlib import Path; import sys; print(Path(sys.prefix) / 'share/doc/timeline-phrase-extractor/examples/sample.json')"
+```
+
+Pass the printed path to `timeline-phrases` to run the example from any working directory.
+With `pip install --user`, use the directory printed by `python -m site --user-base` as the
+prefix instead. The source distribution also retains `examples/sample.json` beside its
+README. Runtime dependencies remain empty; no source checkout is needed after installation.
+
+The 1.3.0 tag was an unpublished candidate. Use 1.3.1 for the complete packaged release,
+including the source-evidence improvements and bundled operating material described above.
