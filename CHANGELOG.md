@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0 - 2026-10-20
+
+- Add exclusive end offsets and one-based columns to every phrase for precise source review.
+- Reject non-object inputs and non-string manuscript text; allow empty manuscripts.
+- Keep line context and coordinates consistent across LF, CRLF and CR files.
+- Fence Markdown evidence safely when source text contains backticks, and create reports exclusively.
+
 ## 1.2.1
 
 - Correct released documentation labels; package behavior is unchanged.

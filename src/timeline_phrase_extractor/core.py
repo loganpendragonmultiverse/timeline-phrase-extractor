@@ -2,21 +2,21 @@ from __future__ import annotations
 
 import json
 import re
+from bisect import bisect_right
 from collections import Counter
 from typing import Any
 
 PROJECT = "timeline-phrase-extractor"
 
 
-def _require(data: dict[str, Any], key: str) -> Any:
-    value = data.get(key)
-    if value is None or value == "" or value == []:
-        raise ValueError(f"{key} is required")
-    return value
-
-
 def _timeline(data: dict[str, Any]) -> dict[str, Any]:
-    text = str(_require(data, "text"))
+    if not isinstance(data, dict):
+        raise TypeError("input must be a JSON object")
+    if "text" not in data:
+        raise ValueError("text is required")
+    text = data.get("text")
+    if not isinstance(text, str):
+        raise TypeError("text must be a string")
     patterns = {
         "duration": "\\b(?:one|two|three|four|five|six|seven|eight|nine|ten|\\d+)\\s+(?:minutes?|hours?|days?|weeks?|months?|years?)\\s+(?:later|earlier|before|after)\\b",
         "relative": "\\b(?:the\\s+)?(?:next|previous|following|prior)\\s+(?:morning|evening|night|day|week|month|year)\\b",
@@ -28,7 +28,9 @@ def _timeline(data: dict[str, Any]) -> dict[str, Any]:
         not isinstance(phrase, str) or not phrase.strip() for phrase in glossary
     ):
         raise ValueError("glossary must be an array of nonempty literal phrases")
-    source_lines = text.splitlines()
+    # Use the same CRLF/CR/LF boundaries for both context and source coordinates.
+    line_starts = [0] + [match.end() for match in re.finditer(r"\r\n|\r|\n", text)]
+    source_lines = re.split(r"\r\n|\r|\n", text)
     headings: list[tuple[int, str]] = [(1, "(document)")]
     for line_number, line_text in enumerate(source_lines, start=1):
         heading = re.match(r"^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$", line_text)
@@ -37,13 +39,15 @@ def _timeline(data: dict[str, Any]) -> dict[str, Any]:
     phrases: list[dict[str, int | str]] = []
     for kind, pattern in patterns.items():
         for match in re.finditer(pattern, text, re.IGNORECASE):
-            line = text.count("\n", 0, match.start()) + 1
+            line = bisect_right(line_starts, match.start())
             section = next(name for start, name in reversed(headings) if start <= line)
             phrases.append(
                 {
                     "kind": kind,
                     "phrase": match.group(0),
                     "offset": match.start(),
+                    "end_offset": match.end(),
+                    "column": match.start() - line_starts[line - 1] + 1,
                     "line": line,
                     "section": section,
                     "context": source_lines[line - 1].strip() if source_lines else "",
@@ -57,12 +61,14 @@ def _timeline(data: dict[str, Any]) -> dict[str, Any]:
             if span in seen:
                 continue
             seen.add(span)
-            line = text.count("\n", 0, match.start()) + 1
+            line = bisect_right(line_starts, match.start())
             phrases.append(
                 {
                     "kind": "authored",
                     "phrase": match.group(1),
                     "offset": match.start(),
+                    "end_offset": span[1],
+                    "column": match.start() - line_starts[line - 1] + 1,
                     "line": line,
                     "section": next(name for start, name in reversed(headings) if start <= line),
                     "context": source_lines[line - 1].strip(),
@@ -90,6 +96,10 @@ def render_markdown(report: dict[str, Any]) -> str:
         if key not in {"version", "project"}:
             lines.append(f"## {key.replace('_', ' ').title()}")
             lines.append("")
-            lines.append(f"```json\n{json.dumps(value, indent=2, ensure_ascii=False)}\n```")
+            encoded = json.dumps(value, indent=2, ensure_ascii=False)
+            fence = "`" * max(
+                3, max((len(run) + 1 for run in re.findall(r"`+", encoded)), default=3)
+            )
+            lines.append(f"{fence}json\n{encoded}\n{fence}")
             lines.append("")
     return "\n".join(lines).rstrip() + "\n"

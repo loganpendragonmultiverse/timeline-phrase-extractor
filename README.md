@@ -46,3 +46,15 @@ Optional `glossary` is an array of literal phrases, for example `["Third Frost",
 ## Version 1.2.1: documentation correction
 
 Version 1.2.0 was released on October 15, 2026. Version 1.2.1 corrects its release labels without changing behavior. The original v1.2.0 tag and downloadable artifacts remain unchanged; use v1.2.1 for the corrected packaged documentation.
+
+## Version 1.3.0: precise source evidence
+
+Each phrase includes `offset` and exclusive `end_offset` in Python Unicode code points,
+plus one-based `line` and `column`. CRLF, CR and LF are line boundaries; other Unicode
+separators remain source characters. Slicing the original text at the offsets reproduces
+the matched phrase. The input must be a JSON object with string `text`; an empty string
+produces an empty report. Reports use exclusive output creation and safely fenced Markdown.
+No date validation, chronology resolution or calendar arithmetic is inferred.
+
+Existing output paths and symbolic links are refused. Use a trusted local output directory;
+protection against hostile concurrent directory or symlink replacement is outside the scope.

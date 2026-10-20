@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "timeline-phrase-extractor"
-version = "1.2.1"
+version = "1.3.0"
 description = "Extract dated, duration, and relative-time phrases into an ordered manuscript review list."
 readme = "README.md"
 requires-python = ">=3.10"
