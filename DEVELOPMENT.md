@@ -18,3 +18,11 @@ separators remain source characters. Slicing the original text at the offsets re
 the matched phrase. The input must be a JSON object with string `text`; an empty string
 produces an empty report. Reports use exclusive output creation and safely fenced Markdown.
 No date validation, chronology resolution or calendar arithmetic is inferred.
+
+## 1.3.1 distribution acceptance
+
+Install both actual tagged distributions into separate virtual environments outside the
+source tree. Require all four operating documents and the sample under
+`share/doc/timeline-phrase-extractor`, compare them byte-for-byte with the tag, run the
+installed sample from another directory, and run the full suite against installed imports.
+Do not substitute checkout-relative samples for bundled examples in this acceptance.

@@ -1,6 +1,13 @@
 # Changelog
 
-## 1.3.0 - 2026-10-20
+## 1.3.1 - 2026-10-20
+
+- Ship operating instructions and the complete example in both wheel and source distributions.
+- Document their installed locations for virtual environments and user installations.
+- Include the reviewed source-coordinate, typed-input, newline, Markdown and output-symlink fixes below.
+- Preserve the unpublished 1.3.0 tag; 1.3.1 is the complete packaged release.
+
+## 1.3.0 - 2026-10-20 (unpublished candidate)
 
 - Add exclusive end offsets and one-based columns to every phrase for precise source review.
 - Reject non-object inputs and non-string manuscript text; allow empty manuscripts.
